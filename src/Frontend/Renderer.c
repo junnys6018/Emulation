@@ -146,6 +146,9 @@ void RendererInit(Controller* cont)
 	rc.controller = cont;
 
 	// Create a window
+#ifdef __EMSCRIPTEN__
+	SDL_CreateWindowAndRenderer(rc.wm.width, rc.wm.height, 0, &rc.win, &rc.rend);
+#else
 	rc.win = SDL_CreateWindow("NES Emulator - By Jun Lim", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, rc.wm.width, rc.wm.height, 0);
 	if (!rc.win)
 	{
@@ -158,9 +161,13 @@ void RendererInit(Controller* cont)
 	{
 		SDL_Emit_Error("Could not create renderer");
 	}
-
+#endif
 	// Load the font
 	FILE* file = fopen("Consola.ttf", "rb");
+	if (!file)
+	{
+		printf("Could not open Consola.tff\n");
+	}
 	fseek(file, 0, SEEK_END);
 	long size = ftell(file);
 	fseek(file, 0, SEEK_SET);

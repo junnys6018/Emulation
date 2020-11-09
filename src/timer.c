@@ -71,3 +71,25 @@ void SleepMicro(uint64_t usec)
 	usleep(usec);
 }
 #endif
+
+#ifdef __EMSCRIPTEN__
+void GetTime(timepoint* tp)
+{
+	*tp = SDL_GetTicks();
+}
+
+float GetElapsedTimeMicro(timepoint* beg, timepoint* end)
+{
+	return 1000.0f * GetElapsedTimeMilli(beg, end);
+}
+
+float GetElapsedTimeMilli(timepoint* beg, timepoint* end)
+{
+	return *end - *beg;
+}
+
+void SleepMicro(uint64_t usec)
+{
+	SDL_Delay(usec / 1000);
+}
+#endif

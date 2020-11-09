@@ -20,6 +20,12 @@ typedef struct timeval timepoint;
 
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <stdint.h>
+#include <SDL.h>
+typedef uint32_t timepoint;
+#endif
+
 #include <stdint.h>
 
 void GetTime(timepoint* tp);

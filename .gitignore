@@ -11,3 +11,4 @@ Resources
 Makefile
 *.make
 *.out
+!wasm.make

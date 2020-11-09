@@ -53,3 +53,12 @@ int OpenFileDialog(char* filepath, int size)
 }
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <string.h>
+int OpenFileDialog(char* filepath, int size)
+{
+	strcpy(filepath, "roms/LegendofZelda.nes");
+	return 0;
+}
+#endif
+

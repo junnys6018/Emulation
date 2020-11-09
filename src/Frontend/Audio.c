@@ -20,7 +20,7 @@ typedef struct
 	float* volatile buffers;
 
 	// Number of free buffers that can we writen to
-	SDL_sem* volatile sem_free_bufers;
+	SDL_sem* volatile sem_free_buffers;
 
 	// Current buffer we are reading from
 	volatile int read_buffer;
@@ -35,7 +35,7 @@ typedef struct
 } AudioContext;
 
 static AudioContext ac;
-static Userdata user_data;
+static Userdata userdata;
 
 float absf(float f)
 {
@@ -45,7 +45,7 @@ float absf(float f)
 void audio_callback(void* userdata, Uint8* stream, int len)
 {
 	// If not all the buffers are free (ie some buffers have been written to)
-	if (SDL_SemValue(ac.sem_free_bufers) < BUF_COUNT - 1)
+	if (SDL_SemValue(ac.sem_free_buffers) < BUF_COUNT - 1)
 	{
 		float* my_stream = (float*)stream;
 		Userdata* data = (Userdata*)userdata;
@@ -73,7 +73,7 @@ void audio_callback(void* userdata, Uint8* stream, int len)
 		ac.read_buffer = (ac.read_buffer + 1) % BUF_COUNT;
 
 		// Increment the semaphore indicating another buffer is free for writing to
-		SDL_SemPost(ac.sem_free_bufers);
+		SDL_SemPost(ac.sem_free_buffers);
 	}
 	else
 	{
@@ -84,13 +84,17 @@ void audio_callback(void* userdata, Uint8* stream, int len)
 void InitSDLAudio()
 {
 	ac.buffers = malloc(BUF_SIZE * BUF_COUNT * sizeof(float));
-	ac.sem_free_bufers = SDL_CreateSemaphore(BUF_COUNT - 1);
+	ac.sem_free_buffers = SDL_CreateSemaphore(BUF_COUNT - 1);
+	if (!ac.sem_free_buffers)
+	{
+		printf("[Error] Failed to create semaphore: %s\n", SDL_GetError());
+	}
 	ac.read_buffer = 0;
 	ac.write_buffer = 0;
 	ac.write_pos = 0;
 
-	user_data.last_filter = 0.0f;
-	user_data.last_sample = 0.0f;
+	userdata.last_filter = 0.0f;
+	userdata.last_sample = 0.0f;
 
 	SDL_AudioSpec spec, have;
 	memset(&spec, 0, sizeof(spec));
@@ -100,7 +104,7 @@ void InitSDLAudio()
 	spec.channels = 1;
 	spec.samples = BUF_SIZE;
 	spec.callback = audio_callback;
-	spec.userdata = &user_data;
+	spec.userdata = &userdata;
 
 	ac.audio_handle = SDL_OpenAudioDevice(NULL, 0, &spec, &have, 0);
 
@@ -111,7 +115,7 @@ void InitSDLAudio()
 void ShutdownSDLAudio()
 {
 	free(ac.buffers);
-	SDL_DestroySemaphore(ac.sem_free_bufers);
+	SDL_DestroySemaphore(ac.sem_free_buffers);
 	SDL_PauseAudioDevice(ac.audio_handle, 1);
 	SDL_CloseAudioDevice(ac.audio_handle);
 }
@@ -143,7 +147,7 @@ void WriteSamples(const float* in, int count)
 			ac.write_buffer = (ac.write_buffer + 1) % BUF_COUNT;
 
 			// Block until there a buffer is free for writing
-			SDL_SemWait(ac.sem_free_bufers);
+			SDL_SemWait(ac.sem_free_buffers);
 		}
 	}
 }
